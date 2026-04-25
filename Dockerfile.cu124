@@ -58,9 +58,7 @@ RUN pip install --no-cache-dir -r requirements_versions.txt
 
 # Configure git to trust all repository directories (needed for volume-mounted repos
 # from host, which may have ownership/permission differences in container context).
-RUN git config --global --add safe.directory /opt/stable-diffusion-webui && \
-    git config --global --add safe.directory /opt/stable-diffusion-webui/repositories && \
-    git config --global --add 'safe.directory=*'
+RUN git config --global --add safe.directory '*'
 
 EXPOSE 7860
 
