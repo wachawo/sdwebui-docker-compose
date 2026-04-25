@@ -41,6 +41,13 @@ services:
       # Fail fast on git auth prompts (no TTY in container) rather than hanging
       # on "Username for 'https://github.com'" if a future repo also 404s.
       GIT_TERMINAL_PROMPT: "0"
+      # Trust all git directories. Volume-mounted ./repositories from host may
+      # have UID/GID mismatch vs container root, which triggers git's "dubious
+      # ownership" error. GIT_CONFIG_* env vars bypass any git version issues
+      # with the safe.directory='*' wildcard (needs git >= 2.36) at build time.
+      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_KEY_0: "safe.directory"
+      GIT_CONFIG_VALUE_0: "*"
       # Model download tokens (sourced from .env via env_file).
       CIVITAI_TOKEN: ${CIVITAI_TOKEN:-}
       HF_TOKEN: ${HF_TOKEN:-}
