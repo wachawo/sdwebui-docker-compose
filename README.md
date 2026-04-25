@@ -118,6 +118,20 @@ docker compose logs -f sdwebui
 
 No image rebuild is needed — the fix is purely via env vars.
 
+### `detected dubious ownership in repository at '.../repositories/...'` on host
+
+The container runs as root, so sub-repos cloned into `./repositories/` are owned by `root:root` on the host. When your host user (or IDE with git integration) later runs `git` anywhere that touches those paths, git refuses to operate with `detected dubious ownership`. Fix by taking ownership on the host:
+
+```bash
+sudo chown -R $USER:$USER ./repositories
+```
+
+The container is unaffected — root retains access regardless of file ownership. To permanently neutralize this class of error for your host user (requires git ≥ 2.36, check with `git --version`):
+
+```bash
+git config --global --add safe.directory '*'
+```
+
 ## Install Without Docker
 
 See [INSTALL.md](INSTALL.md).
