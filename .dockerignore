@@ -1,0 +1,54 @@
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Environment / secrets (passed via env_file, not baked into image)
+.env
+.env.*
+
+# Docker
+Dockerfile
+Dockerfile.*
+docker-compose.yml
+.dockerignore
+
+# sdwebui runtime volumes — mounted at runtime, must not go into build context
+models/
+extensions/
+embeddings/
+outputs/
+repositories/
+log/
+cache/
+
+# Docs
+*.md
+LICENSE
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# IDE / editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs / temp
+*.log
+*.tmp

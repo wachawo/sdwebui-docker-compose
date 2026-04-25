@@ -1,0 +1,97 @@
+services:
+  sdwebui:
+    build:
+      context: .
+      # Override with DOCKERFILE=Dockerfile.cu124 in .env for CUDA 12.4 driver.
+      dockerfile: ${DOCKERFILE:-Dockerfile}
+    image: ${SDWEBUI_IMAGE:-sdwebui_gpu}
+    pull_policy: build
+    container_name: sdwebui
+    hostname: sdwebui
+    restart: unless-stopped
+    networks:
+      - sdwebui_network
+    env_file:
+      - .env
+    environment:
+      TZ: ${TZ:-America/New_York}
+      NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
+      NVIDIA_DRIVER_CAPABILITIES: ${NVIDIA_DRIVER_CAPABILITIES:-compute,utility}
+      SDWEBUI_HOST: ${SDWEBUI_HOST:-0.0.0.0}
+      SDWEBUI_PORT: ${SDWEBUI_PORT:-7860}
+      # Extra flags passed to launch.py (e.g. "--xformers", "--medvram",
+      # "--lowvram", "--no-half", "--enable-insecure-extension-access").
+      SDWEBUI_EXTRA_ARGS: ${SDWEBUI_EXTRA_ARGS:-}
+      # Sub-repo URL overrides read by modules/launch_utils.py. The upstream
+      # Stability-AI/stablediffusion repo was deleted in late 2025 — git clone
+      # fails with "could not read Username for 'https://github.com'" (GitHub
+      # returns 401 for deleted repos). Default to w-e-w's fork (maintained by
+      # a sdwebui contributor; also what sdwebui's dev branch now uses).
+      STABLE_DIFFUSION_REPO: ${STABLE_DIFFUSION_REPO:-https://github.com/w-e-w/stablediffusion.git}
+      STABLE_DIFFUSION_XL_REPO: ${STABLE_DIFFUSION_XL_REPO:-https://github.com/Stability-AI/generative-models.git}
+      K_DIFFUSION_REPO: ${K_DIFFUSION_REPO:-https://github.com/crowsonkb/k-diffusion.git}
+      BLIP_REPO: ${BLIP_REPO:-https://github.com/salesforce/BLIP.git}
+      # xformers package spec used by launch.py when --xformers is passed.
+      # Default `xformers` (unpinned) lets pip pick the latest PyPI wheel
+      # matching our torch 2.6+/2.10+. sdwebui's own hardcoded default
+      # (0.0.23.post1) targets torch 2.1.2+cu121 and causes import warnings.
+      # An empty value would pass nothing to pip and break the install command,
+      # so the :- fallback guards against that too.
+      XFORMERS_PACKAGE: ${XFORMERS_PACKAGE:-xformers}
+      # Fail fast on git auth prompts (no TTY in container) rather than hanging
+      # on "Username for 'https://github.com'" if a future repo also 404s.
+      GIT_TERMINAL_PROMPT: "0"
+      # Model download tokens (sourced from .env via env_file).
+      CIVITAI_TOKEN: ${CIVITAI_TOKEN:-}
+      HF_TOKEN: ${HF_TOKEN:-}
+      # HuggingFace libs also read HUGGING_FACE_HUB_TOKEN — keep both in sync.
+      HUGGING_FACE_HUB_TOKEN: ${HF_TOKEN:-}
+      HF_HUB_OFFLINE: ${HF_HUB_OFFLINE:-0}
+      HUGGINGFACE_HUB_CACHE: ${HUGGINGFACE_HUB_CACHE:-/opt/stable-diffusion-webui/cache}
+    ports:
+      - "${SDWEBUI_PORT:-7860}:${SDWEBUI_PORT:-7860}"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - ./models:/opt/stable-diffusion-webui/models
+      - ./extensions:/opt/stable-diffusion-webui/extensions
+      - ./embeddings:/opt/stable-diffusion-webui/embeddings
+      - ./outputs:/opt/stable-diffusion-webui/outputs
+      - ./repositories:/opt/stable-diffusion-webui/repositories
+      - ./log:/opt/stable-diffusion-webui/log
+      - ./cache:/opt/stable-diffusion-webui/cache
+    # GPU passthrough — requires nvidia-container-toolkit on host.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "128m"
+        max-file: "3"
+    entrypoint: ["/bin/sh", "-c"]
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request, os; urllib.request.urlopen('http://localhost:' + os.environ['SDWEBUI_PORT'] + '/')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 300s
+    command:
+      - "python3 launch.py --listen --port ${SDWEBUI_PORT} --api ${SDWEBUI_EXTRA_ARGS}"
+
+networks:
+  sdwebui_network:
+    driver: bridge
+    enable_ipv6: false
+    driver_opts:
+      com.docker.network.enable_ipv6: "false"

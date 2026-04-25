@@ -1,0 +1,45 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# sdwebui runtime volumes (mounted from docker-compose.yml)
+/models/
+/extensions/
+/embeddings/
+/outputs/
+/repositories/
+/log/
+/cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.Python
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# IDE / editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs / temp
+*.log
+*.tmp
