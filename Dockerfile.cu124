@@ -41,6 +41,10 @@ RUN python3 -m venv /opt/venv \
 RUN printf 'setuptools<81\n' > /opt/pip-constraints.txt
 ENV PIP_CONSTRAINT=/opt/pip-constraints.txt
 
+# sdwebui checkout. webui.sh is shell-driven and assumes interactive setup;
+# in Docker we install requirements directly and let launch.py handle the
+# remaining sub-repo cloning into /opt/stable-diffusion-webui/repositories
+# at first run (that path is volume-mounted so it persists).
 RUN git clone --depth=1 https://github.com/AUTOMATIC1111/stable-diffusion-webui.git /opt/stable-diffusion-webui
 
 WORKDIR /opt/stable-diffusion-webui
