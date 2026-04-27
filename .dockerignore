@@ -20,14 +20,15 @@ Dockerfile.*
 docker-compose.yml
 .dockerignore
 
-# sdwebui runtime volumes — mounted at runtime, must not go into build context
-models/
-extensions/
-embeddings/
-outputs/
-repositories/
-log/
-cache/
+# runtime volumes (mounted from docker-compose.yml)
+/models/
+/extensions/
+/embeddings/
+/outputs/
+/repos/
+/repositories/
+/log/
+/cache/
 
 # Docs
 *.md
@@ -46,11 +47,10 @@ env/
 .mypy_cache/
 .ruff_cache/
 
-# IDE / editors
-.idea/
-.vscode/
+# Editors
 *.swp
 *.swo
+*~
 
 # OS
 .DS_Store

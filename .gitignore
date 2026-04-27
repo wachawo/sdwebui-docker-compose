@@ -10,11 +10,12 @@
 .env.*
 !.env.example
 
-# sdwebui runtime volumes (mounted from docker-compose.yml)
+# runtime volumes (mounted from docker-compose.yml)
 /models/
 /extensions/
 /embeddings/
 /outputs/
+/repos/
 /repositories/
 /log/
 /cache/
@@ -36,9 +37,7 @@ dist/
 venv/
 env/
 
-# IDE / editors
-.idea/
-.vscode/
+# Editors
 *.swp
 *.swo
 *~
