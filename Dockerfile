@@ -1,7 +1,20 @@
-# GPU image based on CUDA 13.0 + cuDNN (Ubuntu 24.04 ships Python 3.12).
-# sdwebui's reference Python is 3.10; recent revisions run on 3.12, but if you
-# hit a compat issue, fall back to Dockerfile.cu124 (Ubuntu 22.04 / Python 3.10).
-FROM nvidia/cuda:13.0.3-cudnn-runtime-ubuntu24.04
+# GPU image based on CUDA 13.0 + cuDNN on Ubuntu 22.04 (Python 3.10).
+# Required for Blackwell GPUs (compute capability sm_120 / sm_121) such as the
+# DGX Spark (GB10 Grace-Blackwell, aarch64): torch cu124/cu128 builds only ship
+# kernels up to sm_90, so those GPUs fail at runtime with
+# "no kernel image is available for execution on the device". cu130 wheels carry
+# the Blackwell kernels.
+#
+# The base image is multi-arch — build this on the target host (DGX Spark is
+# aarch64) so pip pulls the matching aarch64 cu130 wheels.
+#
+# Python 3.10 (Ubuntu 22.04), not 3.12 (24.04), is deliberate: sdwebui pins old
+# deps (Pillow==9.5.0, tokenizers via transformers==4.30.2) that have no aarch64
+# cp312 wheels, so on 24.04/3.12 pip falls back to building them from source —
+# which needs a Rust toolchain (tokenizers) and fails outright for Pillow 9.5.0
+# (no Python 3.12 support). cp310 aarch64 wheels exist for both, so 22.04/3.10
+# installs them prebuilt. This matches Dockerfile.cu124's Python 3.10.
+FROM nvidia/cuda:13.0.3-cudnn-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
@@ -48,10 +61,14 @@ RUN git clone --depth=1 https://github.com/AUTOMATIC1111/stable-diffusion-webui.
 
 WORKDIR /opt/stable-diffusion-webui
 
-# PyTorch with CUDA 13.0.
+# PyTorch with CUDA 13.0. This is the only torch/vision/audio triple that has
+# matching aarch64 wheels on the cu130 index (torch 2.9.x lacks a cu130 aarch64
+# torchvision/torchaudio, torch 2.12 lacks a cu130 aarch64 torchaudio). All
+# three pin +cu130 explicitly so torchvision is not resolved from PyPI as a
+# non-CUDA build via --extra-index-url.
 RUN pip install --no-cache-dir \
         --extra-index-url https://download.pytorch.org/whl/cu130 \
-        torch==2.10.0+cu130 torchvision torchaudio==2.10.0+cu130
+        torch==2.11.0+cu130 torchvision==0.26.0+cu130 torchaudio==2.11.0+cu130
 
 RUN pip install --no-cache-dir -r requirements_versions.txt
 

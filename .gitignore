@@ -49,3 +49,7 @@ Thumbs.db
 # Logs / temp
 *.log
 *.tmp
+
+*.md
+!README.md
+!docs/**/*.md
