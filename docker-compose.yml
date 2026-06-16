@@ -67,6 +67,11 @@ services:
       - ./repositories:/opt/stable-diffusion-webui/repositories
       - ./log:/opt/stable-diffusion-webui/log
       - ./cache:/opt/stable-diffusion-webui/cache
+      # Settings (config.json) + UI widget defaults (ui-config.json). Mounted as
+      # a directory, not single files, to avoid Docker's "bind-mount a missing
+      # file -> host gets a directory" trap. sdwebui creates both files here on
+      # first run (paths set via --ui-settings-file / --ui-config-file below).
+      - ./config:/opt/stable-diffusion-webui/config
     # GPU passthrough — requires nvidia-container-toolkit on host.
     deploy:
       resources:
@@ -94,7 +99,7 @@ services:
       retries: 3
       start_period: 300s
     command:
-      - "python3 launch.py --listen --port ${SDWEBUI_PORT} --api ${SDWEBUI_EXTRA_ARGS}"
+      - "python3 launch.py --listen --port ${SDWEBUI_PORT} --api --ui-settings-file config/config.json --ui-config-file config/ui-config.json ${SDWEBUI_EXTRA_ARGS}"
 
 networks:
   sdwebui_network:

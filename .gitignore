@@ -19,6 +19,7 @@
 /repositories/
 /log/
 /cache/
+/config/
 
 # Python
 __pycache__/
